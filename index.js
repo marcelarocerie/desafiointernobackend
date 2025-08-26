@@ -6,18 +6,22 @@ dotenv.config();
 
 const app = express();
 
-// 🗝 Domínios liberados para chamar sua API
-const allowedOrigins = [
-  'https://desafiointernofrontend.vercel.app',
-  'http://localhost:5173'
+// Domínios permitidos (fixos)
+const allowedExact = [
+  'https://desafiointernofrontend.vercel.app', // produção
+  'http://localhost:5173',                     // dev local (Vite)
 ];
 
+// Permite qualquer PREVIEW da Vercel para este projeto
+// Ex.: https://desafiointernofrontend-5lasw1ngn-marcelas-projects-6aa7d53e.vercel.app
+const allowPreview = (origin) =>
+  /^https:\/\/desafiointernofrontend-[a-z0-9-]+\.vercel\.app$/.test(origin || '');
+
 app.use(cors({
-  origin(origin, callback) {
-    if (!origin) return callback(null, true);
-    return allowedOrigins.includes(origin)
-      ? callback(null, true)
-      : callback(new Error(`CORS blocked: ${origin}`));
+  origin(origin, cb) {
+    if (!origin) return cb(null, true); // curl/Postman/health checks
+    if (allowedExact.includes(origin) || allowPreview(origin)) return cb(null, true);
+    return cb(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
 }));
